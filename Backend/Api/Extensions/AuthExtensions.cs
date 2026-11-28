@@ -43,7 +43,7 @@ public static class AuthExtensions
         // Services used for login
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
-
+        builder.Services.AddScoped<IUserService, UserService>();
         return builder;
     }
 }

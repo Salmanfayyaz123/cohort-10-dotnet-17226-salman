@@ -23,6 +23,36 @@ public class AuthControllerTests
         Email = "ali@test.com",
         Password = "Ali@12345"
     };
+        [Fact]
+    public async Task Register_ValidRequest_Returns201WithUser()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Name = "Sara",
+            Email = "sara@test.com",
+            Password = "Sara@12345"
+        };
+
+        _authService.Setup(s => s.RegisterAsync(request))
+            .ReturnsAsync(new UserDto
+            {
+                Id = "user-2",
+                Name = "Sara",
+                Email = "sara@test.com",
+                Roles = new List<string> { "User" }
+            });
+
+        // Act
+        var result = await _controller.Register(request);
+
+        // Assert
+        var created = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status201Created, created.StatusCode);
+
+        var body = Assert.IsType<UserDto>(created.Value);
+        Assert.Equal("sara@test.com", body.Email);
+    }
 
     [Fact]
     public async Task Login_InvalidCredentials_ReturnsUnauthorized()

@@ -25,6 +25,15 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(response);
     }
 
+        // POST /api/auth/register  (anyone, always creates a User)
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<ActionResult<UserDto>> Register(RegisterRequest request)
+    {
+        var user = await authService.RegisterAsync(request);
+        return StatusCode(StatusCodes.Status201Created, user);
+    }
+
     // GET /api/auth/me  (only works with a valid token)
     [HttpGet("me")]
     [Authorize]

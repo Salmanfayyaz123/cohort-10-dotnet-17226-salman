@@ -1,4 +1,5 @@
 using Api.DTOs.Auth;
+using Api.Enums;
 using Api.Models;
 using Api.Services;
 using Api.Tests.Helpers;
@@ -13,6 +14,7 @@ public class AuthServiceTests
     private readonly Mock<UserManager<AppUser>> _userManager = TestHelpers.CreateUserManagerMock();
     private readonly Mock<ITokenService> _tokenService = new();
     private readonly AuthService _authService;
+    private readonly Mock<IUserService> _userService = new();
 
     public AuthServiceTests()
     {
@@ -20,6 +22,7 @@ public class AuthServiceTests
         _authService = new AuthService(
             _userManager.Object,
             _tokenService.Object,
+                _userService.Object,
             NullLogger<AuthService>.Instance);
     }
 
@@ -36,6 +39,39 @@ public class AuthServiceTests
         Email = "ali@test.com",
         IsActive = true
     };
+        [Fact]
+    public async Task RegisterAsync_AlwaysCreatesUserWithUserRole()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Name = "Sara",
+            Email = "sara@test.com",
+            Password = "Sara@12345"
+        };
+
+        _userService
+            .Setup(s => s.CreateUserAsync("Sara", "sara@test.com", "Sara@12345", UserRole.User, null))
+            .ReturnsAsync(new UserDto
+            {
+                Id = "user-2",
+                Name = "Sara",
+                Email = "sara@test.com",
+                Roles = new List<string> { "User" }
+            });
+
+        // Act
+        var result = await _authService.RegisterAsync(request);
+
+        // Assert
+        Assert.Equal("user-2", result.Id);
+        Assert.Contains("User", result.Roles);
+
+        // Proves sign-up can never create an Admin
+        _userService.Verify(
+            s => s.CreateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), UserRole.User, null),
+            Times.Once);
+    }
 
     [Fact]
     public async Task LoginAsync_UnknownEmail_ReturnsNull()
